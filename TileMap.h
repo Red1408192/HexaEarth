@@ -106,7 +106,7 @@ class TileBoard : public  MapObject{
                     }
                 }
             }
-            puts("First Raw Linker Done");
+            puts("First Row Linker Done");
             //
             //main tile map
             //
@@ -127,7 +127,7 @@ class TileBoard : public  MapObject{
                     Linker(h,0,2,h-1,0);
                     Linker(h,0,1,h-1,1);
                 }
-                sprintf(errorMessage, "raw %d initialized", h);
+                sprintf(errorMessage, "row %d initialized", h);
                 puts(errorMessage);
                 for (int l = 1; l < len; l++){
                     fullTileList.emplace_back(h,l);
@@ -145,7 +145,7 @@ class TileBoard : public  MapObject{
                 if(inlac){
                     Linker(h,len-1,1,h-1,0);
                 }
-                sprintf(errorMessage, "raw %d done", h);
+                sprintf(errorMessage, "row %d done", h);
                 puts(errorMessage);
             }
             //
@@ -166,7 +166,7 @@ class TileBoard : public  MapObject{
                 Linker(h,0,2,h-1,0);
                 Linker(h,0,1,h-1,1);
             }
-            puts("First Tile last raw done");
+            puts("North Pole row initialized");
             for(int pl = 1; pl < len; pl++){
                 fullTileList.emplace_back(h,pl);
                 map[h].push_back(&fullTileList[index]);
@@ -183,7 +183,8 @@ class TileBoard : public  MapObject{
                     }
                 }
             }
-            puts("Complete");
+            sprintf(errorMessage, "Last row done", h);
+            puts(errorMessage);
         }
 
     void Linker(int fy, int fx, int dir, int ty, int tx, LinkerParam lp = Normal){
