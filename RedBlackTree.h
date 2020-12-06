@@ -1,40 +1,21 @@
+#pragma once
 #include "TileMap.h"
+#include "MapObject.h"
 #include "Native.h"
 #include <vector>
 #include <bitset>
-
-struct Block{
-    int id;
-    Color color = Red;
-    Tile * tile;
-
-    Block* childs[2] = {nullptr, nullptr};
-    Block* parent = nullptr;
-    public:
-        Block(int iy, int ix){
-            tile = new Tile(iy, ix);
-            id = tile->id;
-        }
-
-        Tile* GetTilePtr(){
-            return tile;
-        }
-
-        void NewId(){
-            tile->id = rand();
-            id = tile->id;
-        }
-};
+using namespace std;
 
 class Tree{
-    vector<Block> tree;
     public:
         Tree(int dimension){
             tree.reserve(dimension);
         }
 
         Tile* emplace_back(int iy, int ix){
-            Insert(&tree.emplace_back(iy, ix), &tree.front());
+            tree.emplace_back(iy, ix);
+            Insert(&tree.back(), &tree.front());
+            tree.back().index = tree.size()-1;
             return tree.back().GetTilePtr();
         }
 
@@ -49,7 +30,7 @@ class Tree{
         Block* GetSibling(Block* s){
             Block* p = GetParent(s);
             if (p == nullptr){ return nullptr; };
-            return p->childs[Minor]==s? p->childs[1] : p->childs[Major];
+            return p->childs[Minor]==s? p->childs[Major] : p->childs[Minor];
         }
 
         Block* GetUncle(Block* n){
@@ -60,33 +41,33 @@ class Tree{
         }
 
         void Rotate(Block* Pivot, Way way){
-            Block* nH = Pivot->childs[!way?Left:Right];
+            Block* nH = Pivot->childs[!way?Minor:Major];
 
             if (Pivot->parent != nullptr){
-                if(Pivot->parent->childs[Left] == Pivot){
-                    Pivot->parent->childs[Left] = nH;
+                if(Pivot->parent->childs[Minor] == Pivot){
+                    Pivot->parent->childs[Minor] = nH;
                 }
-                else if(Pivot->parent->childs[Right] == Pivot){
-                    Pivot->parent->childs[Right] = nH;
+                else if(Pivot->parent->childs[Major] == Pivot){
+                    Pivot->parent->childs[Major] = nH;
                 }
                 nH->parent = Pivot->parent;
             }
 
-            Pivot->childs[!way?Left:Right] = nH->childs[way?Left:Right];
-            if(Pivot->childs[!way?Left:Right] == nullptr){
-                Pivot->childs[!way?Left:Right]->parent = Pivot; //was nH previusly
+            Pivot->childs[!way?Minor:Major] = nH->childs[way?Minor:Major];
+            if(Pivot->childs[!way?Minor:Major] == nullptr){
+                Pivot->childs[!way?Minor:Major]->parent = Pivot; //was nH previusly
             }
 
-            nH->childs[way?Left:Right] = Pivot;
-            Pivot->parent = nH;            
+            nH->childs[way?Minor:Major] = Pivot;
+            Pivot->parent = nH;
         }
 
         void Insert(Block* block, Block* root){
             if(block->id < root->id){
-                if(root->childs[Left] != nullptr){
-                    Insert(block, root->childs[Left]);
+                if(root->childs[Minor] != nullptr){
+                    Insert(block, root->childs[Minor]);
                 }
-                root->childs[Left] = block;
+                root->childs[Minor] = block;
                 block->parent = root;
                 if(root->color != Black){
                 CheckStability(block);
@@ -94,10 +75,10 @@ class Tree{
                 return;
             }
             else if(block->id > root->id){
-                if(root->childs[Right] != nullptr){
-                    Insert(block, root->childs[Right]);
+                if(root->childs[Major] != nullptr){
+                    Insert(block, root->childs[Major]);
                 }
-                root->childs[Right] = block;
+                root->childs[Major] = block;
                 block->parent = root;
                 if(root->color != Black){
                 CheckStability(block);
@@ -126,22 +107,47 @@ class Tree{
                 }
             }
             else{
-                if(GP->childs[Left] == P && P->childs[Right] == block){
+                if(GP->childs[Minor] == P && P->childs[Major] == block){
                     Rotate(block, Left);
                 }
-                else if(GP->childs[Right] == P && P->childs[Left] == block){
+                else if(GP->childs[Major] == P && P->childs[Minor] == block){
                     Rotate(block, Right);
                 }
             
-                if(P == block->childs[Left]){
-                    Rotate(GP,Right);
+                if(P == block->childs[Minor]){
+                    Rotate(GP,Left);
                 }
                 else{
-                    Rotate(GP, Left);
+                    Rotate(GP, Right);
                 }
                 block->color = Black;
                 GP->color = Red;
             }
         }
+
+        int GetIndex(int tileId, Block* currentBlock = nullptr){
+            if(currentBlock->id == tileId){
+                return currentBlock->index;
+            }
+            else if(currentBlock->id < tileId){
+                currentBlock->childs[Minor] == nullptr? throw : GetIndex(tileId, currentBlock->childs[Minor]);
+            }
+            else if(currentBlock->id > tileId){
+                currentBlock->childs[Major] == nullptr? throw : GetIndex(tileId, currentBlock->childs[Major]);
+            }
+            else{
+                GetIndex(tileId, &tree[0]);
+            }
+        }
+
+        Tile operator [](int index){
+            return tree[index].tile;
+        }
+
+        Block GetBlock(int index){
+            return tree[index];
+        }
+    private:
+        vector<Block> tree;
 
 };

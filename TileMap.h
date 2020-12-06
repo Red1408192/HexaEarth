@@ -5,96 +5,41 @@
 #include <iostream>
 #include <string>
 #include <cxxabi.h>
-#include "Native.h"
+#include "MapObject.h"
+#include "RedBlackTree.h"
 
 using namespace std;
 using namespace abi;
-
-class MapObject{
-    public:
-        char name [20];
-        int id = 0;
-        MapObject(){
-            Naming(this);
-        }
-        template <typename T> 
-        void Naming(T object){
-            object->id = (const int)rand();
-            char hexa[12] = "0x";
-            int* status = 0;
-            strcpy(name, __cxa_demangle(typeid(object).name(), 0, 0, status));
-            strcat(object->name, " - ");
-            strcat(object->name, To_hex(object->id, hexa));
-        }
-};
-
-class Tile : public MapObject{
-    Position * position;
-
-    //Mass
-    int land{};
-    int water{};
-
-    public:
-        Tile *border[6];
-        Tile(int iy, int ix){
-            Naming(this);
-            position = new Position(iy, ix);
-        }
-        int GetX(){
-            return this->position->x;
-        }
-        int GetY(){
-            return this->position->y;
-        }
-};
-
-class Plate : public MapObject{
-    public:
-        Plate(){
-            Naming(this);
-        }
-    Cardinals direction;
-    int size;
-    vector<Tile*> tiles;
-};
 
 class TileBoard : public  MapObject{
     public:
         int len = 0;
         int hei = 0;
-        vector<Tile> fullTileList;
+        Tree fullTileList;
         vector<vector<Tile *>> map;
 
-        TileBoard(int dimension){
+        TileBoard(int dimension) : fullTileList(dimension*(dimension/2)){
             Naming(this);
             char errorMessage[50];
             puts("Naming done");
-
             //Variables initialization
             len = dimension;
             hei = dimension/2;
-            fullTileList.reserve(len*hei);
             map.reserve(hei);
-            int index = 0;
             puts("Vectors initialization Done");
 
             //
             //Map creation - Polar Sud Row
             //
-            fullTileList.emplace_back(0,0);
             vector<Tile *> sudLine;
             sudLine.reserve(len);
             map.push_back(sudLine);
-            map[0].push_back(&fullTileList[index]);
-            index++;
+            map[0].push_back(fullTileList.emplace_back(0,0));
             puts("First tile done");
 
             //first raw
             for (int l = 1; l < len; l++){
-                fullTileList.emplace_back(0,l);
-                map[0].push_back(&fullTileList[index]);
-                index++;
+                map[0].push_back(fullTileList.emplace_back(0,l));
 
                 //linker
                 Linker(0,l,3,0,l-1);
@@ -117,9 +62,7 @@ class TileBoard : public  MapObject{
                 newLine.reserve(len);
                 map.push_back(newLine);
 
-                fullTileList.emplace_back(h, 0);
-                map[h].push_back(&fullTileList[index]);
-                index++;
+                map[h].push_back(fullTileList.emplace_back(h, 0));
                 if(!inlac){
                     Linker(h,0,1,h-1,0);
                 }
@@ -130,9 +73,7 @@ class TileBoard : public  MapObject{
                 sprintf(errorMessage, "row %d initialized", h);
                 puts(errorMessage);
                 for (int l = 1; l < len; l++){
-                    fullTileList.emplace_back(h,l);
-                    map[h].push_back(&fullTileList[index]);
-                    index++;
+                    map[h].push_back(fullTileList.emplace_back(h,l));
                     //linker
                     Linker(h,l,3,h,l-1);
                     Linker(h,l,2,h-1,l-1);
@@ -156,9 +97,7 @@ class TileBoard : public  MapObject{
             nordLine.reserve(len);
             map.push_back(nordLine);
 
-            fullTileList.emplace_back(h, 0);
-            map[h].push_back(&fullTileList[index]);
-            index++;
+            map[h].push_back(fullTileList.emplace_back(h, 0));
             if(inlac){
                 Linker(h,0,1,h-1,0);
             }
@@ -168,9 +107,8 @@ class TileBoard : public  MapObject{
             }
             puts("North Pole row initialized");
             for(int pl = 1; pl < len; pl++){
-                fullTileList.emplace_back(h,pl);
-                map[h].push_back(&fullTileList[index]);
-                index++;
+                
+                map[h].push_back(fullTileList.emplace_back(h,pl));
                 //linker
                 Linker(h,pl,3,h,pl-1);
                 Linker(h,pl,2,h-1,pl-1);
