@@ -12,9 +12,9 @@ class Tree{
             tree.reserve(dimension);
         }
 
-        Tile* emplace_back(int iy, int ix){
+        Tile* emplace_back(int iy, int ix, bool first = false){
             tree.emplace_back(iy, ix);
-            Insert(&tree.back(), &tree.front());
+            first? Insert(&tree.back(), &tree.front()) : Insert(&tree.back(), treeRoot);
             tree.back().index = tree.size()-1;
             return tree.back().GetTilePtr();
         }
@@ -50,16 +50,18 @@ class Tree{
                 else if(Pivot->parent->childs[Major] == Pivot){
                     Pivot->parent->childs[Major] = nH;
                 }
-                nH->parent = Pivot->parent;
             }
-
+            else{
+                this->treeRoot = nH;
+            }
+            nH->parent = Pivot->parent;
             Pivot->childs[!way?Minor:Major] = nH->childs[way?Minor:Major];
-            if(Pivot->childs[!way?Minor:Major] == nullptr){
-                Pivot->childs[!way?Minor:Major]->parent = Pivot; //was nH previusly
-            }
-
             nH->childs[way?Minor:Major] = Pivot;
             Pivot->parent = nH;
+
+            if(Pivot->childs[!way?Minor:Major] != nullptr){
+                Pivot->childs[!way?Minor:Major]->parent = Pivot; //was nH previusly
+            }
         }
 
         void Insert(Block* block, Block* root){
@@ -86,7 +88,8 @@ class Tree{
                 return;
             }
             else if(block->id = root->id){
-                if(block == root){block->color = Black; return;}
+                if(root == block){block->color = Black; treeRoot = block; return;}
+                block->NewId();
                 Insert(block, &tree.front());
             }
         }
@@ -108,17 +111,22 @@ class Tree{
             }
             else{
                 if(GP->childs[Minor] == P && P->childs[Major] == block){
-                    Rotate(block, Left);
+                    Rotate(P, Left);
+                    if(block->childs[Minor] == P){
+                        Rotate(GP,Right);
+                    }
+                    else{
+                        Rotate(GP, Left);
+                    }
                 }
                 else if(GP->childs[Major] == P && P->childs[Minor] == block){
-                    Rotate(block, Right);
-                }
-            
-                if(P == block->childs[Minor]){
-                    Rotate(GP,Left);
-                }
-                else{
-                    Rotate(GP, Right);
+                    Rotate(P, Right);
+                    if(block->childs[Major] == P){
+                        Rotate(GP,Right);
+                    }
+                    else{
+                        Rotate(GP, Left);
+                    }
                 }
                 block->color = Black;
                 GP->color = Red;
@@ -149,5 +157,6 @@ class Tree{
         }
     private:
         vector<Block> tree;
+        Block* treeRoot = {nullptr};
 
 };

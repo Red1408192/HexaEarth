@@ -34,7 +34,7 @@ class TileBoard : public  MapObject{
             vector<Tile *> sudLine;
             sudLine.reserve(len);
             map.push_back(sudLine);
-            map[0].push_back(fullTileList.emplace_back(0,0));
+            map[0].push_back(fullTileList.emplace_back(0,0, true));
             puts("First tile done");
 
             //first raw
