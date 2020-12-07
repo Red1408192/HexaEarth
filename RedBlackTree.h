@@ -12,9 +12,16 @@ class Tree{
             tree.reserve(dimension);
         }
 
-        Tile* emplace_back(int iy, int ix, bool first = false){
+        Tile* first_emplace_back(int iy, int ix){
             tree.emplace_back(iy, ix);
-            first? Insert(&tree.back(), &tree.front()) : Insert(&tree.back(), treeRoot);
+            Insert(&tree.back(), &tree.front());
+            tree.back().index = tree.size()-1;
+            return tree.back().GetTilePtr();
+        }
+
+        Tile* emplace_back(int iy, int ix){
+            tree.emplace_back(iy, ix);
+            Insert(&tree.back(), treeRoot);
             tree.back().index = tree.size()-1;
             return tree.back().GetTilePtr();
         }
