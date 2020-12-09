@@ -22,12 +22,13 @@ class Tree{
         Tile* emplace_back(int iy, int ix){
             tree.emplace_back(iy, ix);
             Insert(&tree.back(), treeRoot);
+            CheckStability(&tree.back());
             tree.back().index = tree.size()-1;
             return tree.back().GetTilePtr();
         }
 
         Block* GetParent(Block* c){
-            return c->parent == nullptr ? nullptr : c->parent;
+            return c == nullptr? nullptr : c->parent == nullptr ? nullptr : c->parent;
         }
 
         Block* GetGrandParent(Block* gC){
@@ -54,21 +55,20 @@ class Tree{
                 if(Pivot->parent->childs[Minor] == Pivot){
                     Pivot->parent->childs[Minor] = nH;
                 }
-                else if(Pivot->parent->childs[Major] == Pivot){
+                else{
                     Pivot->parent->childs[Major] = nH;
                 }
             }
             else{
                 this->treeRoot = nH;
             }
-            nH->parent = Pivot->parent;
+            if(nH->childs[way?Minor:Major] != nullptr){
+                nH->childs[way?Minor:Major]->parent = Pivot;
+            }
             Pivot->childs[!way?Minor:Major] = nH->childs[way?Minor:Major];
             nH->childs[way?Minor:Major] = Pivot;
+            nH->parent = Pivot->parent;
             Pivot->parent = nH;
-
-            if(Pivot->childs[!way?Minor:Major] != nullptr){
-                Pivot->childs[!way?Minor:Major]->parent = Pivot; //was nH previusly
-            }
         }
 
         void Insert(Block* block, Block* root){
@@ -76,10 +76,9 @@ class Tree{
                 if(root->childs[Minor] != nullptr){
                     Insert(block, root->childs[Minor]);
                 }
-                root->childs[Minor] = block;
-                block->parent = root;
-                if(root->color != Black){
-                CheckStability(block);
+                else{
+                    root->childs[Minor] = block;
+                    block->parent = root;
                 }
                 return;
             }
@@ -87,17 +86,16 @@ class Tree{
                 if(root->childs[Major] != nullptr){
                     Insert(block, root->childs[Major]);
                 }
-                root->childs[Major] = block;
-                block->parent = root;
-                if(root->color != Black){
-                CheckStability(block);
+                else{
+                    root->childs[Major] = block;
+                    block->parent = root;
                 }
                 return;
             }
             else if(block->id = root->id){
                 if(root == block){block->color = Black; treeRoot = block; return;}
                 block->NewId();
-                Insert(block, &tree.front());
+                Insert(block, treeRoot);
             }
         }
 
@@ -105,37 +103,37 @@ class Tree{
             Block* GP = GetGrandParent(block);
             Block* U = GetUncle(block);
             Block* P = GetParent(block);
-            
-            if(U != nullptr && U->color == Red){
+            if(P == nullptr){
+                block->color = Black;
+            }
+            else if(P->color == Black){
+                return;
+            }
+            else if(U != nullptr && U->color == Red){
                 U->color = Black;
                 block->parent->color = Black;
-                if(GP != &tree.front()){
-                    GP->color = Red;
-                    if(GP->parent != nullptr && GP->parent->color != Black){
-                        CheckStability(GP);
-                    }
-                }
+                GP->color = Red;
+                CheckStability(GP);
             }
             else{
                 if(GP->childs[Minor] == P && P->childs[Major] == block){
                     Rotate(P, Left);
-                    if(block->childs[Minor] == P){
-                        Rotate(GP,Right);
-                    }
-                    else{
-                        Rotate(GP, Left);
-                    }
+                    block = P;
+                    P = block->parent;
                 }
                 else if(GP->childs[Major] == P && P->childs[Minor] == block){
                     Rotate(P, Right);
-                    if(block->childs[Major] == P){
-                        Rotate(GP,Right);
-                    }
-                    else{
-                        Rotate(GP, Left);
-                    }
+                    block = P;
+                    P = block->parent;
                 }
-                block->color = Black;
+
+                if(P->childs[Minor] == block){
+                    Rotate(GP,Right);
+                }
+                else{
+                    Rotate(GP, Left);
+                }
+                P->color = Black;
                 GP->color = Red;
             }
         }
