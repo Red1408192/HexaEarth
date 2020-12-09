@@ -139,18 +139,26 @@ class Tree{
         }
 
         int GetIndex(int tileId, Block* currentBlock = nullptr){
+            currentBlock = currentBlock == nullptr? treeRoot : currentBlock;
             if(currentBlock->id == tileId){
                 return currentBlock->index;
             }
-            else if(currentBlock->id < tileId){
-                currentBlock->childs[Minor] == nullptr? throw : GetIndex(tileId, currentBlock->childs[Minor]);
-            }
             else if(currentBlock->id > tileId){
-                currentBlock->childs[Major] == nullptr? throw : GetIndex(tileId, currentBlock->childs[Major]);
+                if(currentBlock->childs[Major] == nullptr){
+                    throw;
+                }
+                return GetIndex(tileId, currentBlock->childs[Minor]);
+            }
+            else if(currentBlock->id < tileId){
+                if(currentBlock->childs[Major] == nullptr){
+                    throw;
+                }
+                return GetIndex(tileId, currentBlock->childs[Major]);
             }
             else{
-                GetIndex(tileId, &tree[0]);
+                return GetIndex(tileId, &tree[0]);
             }
+            throw;
         }
 
         Tile operator [](int index){
