@@ -9,15 +9,22 @@
 #include <tuple>
 using namespace std;
 
+template<typename R, typename ... T>
+struct Func{
+    function<R(T...)> *operation;
+    tuple<T...> args;
+    Func(function<R(T...)> op, T... ar) : operation(&op), args(ar ...){
+
+    }
+};
+
 mutex poolMutex;
 mutex queueMutex;
 
 template<typename R, typename ... T>
 class ThreadPool{
     vector<thread> Pool;
-    queue<function<R(T...)>> opQueue;
-    queue<tuple<T...>> argQueue;
-
+    queue<Func<R,T...>> Queue;
     bool killPool = false;
 
     public:
@@ -38,8 +45,7 @@ class ThreadPool{
             cout<<"Adding job to queue\n";
             {            
                 unique_lock<mutex> lock(queueMutex);
-                opQueue.push(newJob);
-                argQueue.push(tuple<T...>(args...));
+                Queue.push(Func<R,T...>(newJob, args...));
             }
         }
 
@@ -59,25 +65,22 @@ class ThreadPool{
             bool isProcessing = false;
             while(!killPool)
             {
-                function<R(T...)> *operation;
-                tuple<T...> *arguments;
+                Func<R, T...> *task;
                 {
                     unique_lock<mutex> lock(queueMutex);
-                    if(!opQueue.empty()){
+                    if(!Queue.empty()){
                         cout<<"Begining job\n";
-                        operation = &opQueue.front();
-                        arguments = &argQueue.front();
-                        opQueue.pop();
-                        argQueue.pop();
+                        task = &Queue.front();
+                        Queue.pop();
                         isProcessing = true;
                     }
                 }
                 if(isProcessing){
                     if constexpr (is_same<void, R>::value){ //"compile time if"
-                        apply(operation, arguments);
+                        apply(*task->operation, task->args);
                     }
                     else{
-                        R retObj = apply(operation, arguments);
+                        R retObj = apply(*task->operation, task->args);
                     }
                     isProcessing = false;
                 }
@@ -85,7 +88,7 @@ class ThreadPool{
         }
 
         bool IsQueEmpty(){
-            return opQueue.empty();
+            return Queue.empty();
         }
 
         int ThreadsCount(){

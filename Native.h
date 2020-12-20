@@ -13,7 +13,7 @@ char* To_hex(int intToHex, char* str = new char[9], int count = 0){
     }
     strncat(str, &heximals[remainder], 1);
     return str;
-};
+}
 
 class Position{
     public:

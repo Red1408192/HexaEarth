@@ -10,6 +10,8 @@
                 "${file}",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
+                "-std=c++17",
+                "-pedantic-errors",
                 "-pthread"
             ],
             "options": {
@@ -30,6 +32,8 @@
                 "${file}",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
+                "-std=c++17",
+                "-pedantic-errors",
                 "-pthread"
             ],
             "options": {
