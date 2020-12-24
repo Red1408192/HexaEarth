@@ -1,7 +1,7 @@
 #pragma once
-#include "TileMap.h"
-#include "MapObject.h"
-#include "Native.h"
+#include "TileMap.hpp"
+#include "MapObject.hpp"
+#include "Native.hpp"
 #include <vector>
 #include <bitset>
 using namespace std;

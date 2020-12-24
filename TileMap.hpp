@@ -5,8 +5,8 @@
 #include <iostream>
 #include <string>
 #include <cxxabi.h>
-#include "MapObject.h"
-#include "RedBlackTree.h"
+#include "MapObject.hpp"
+#include "RedBlackTree.hpp"
 typedef vector<Tile *> Row;
 typedef vector<Row> SGTilesList;
 using namespace std;

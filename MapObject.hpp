@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 #include <cxxabi.h>
-#include "Native.h"
+#include "Native.hpp"
 using namespace std;
 using namespace abi;
 
