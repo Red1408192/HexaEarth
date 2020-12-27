@@ -1,27 +1,29 @@
-#include "TileMap.h"
+#include "TileMap.hpp"
 #include <iostream>
 #include <chrono>
-#include "ThreadPool.h"
+#include "ThreadPool.hpp"
 using namespace std;
 
-void DoCounting(int result){
+void DoCounting(int& input){
+    int result = input;
     for(int i = 0; i < INT32_MAX; i++){
         result ++;
     }
     for(int i = 0; i < INT32_MAX; i++){
         result --;
     }
-    cout << "Done\n"<< "result:"<< result<<"\n";
+    cout << "result:"<< result<<"\n";
+    cout << "result pointer:"<< &result<<"\n";
 }
 
 int main(){
-    ThreadPool<void, int> tP = ThreadPool<void, int>();
+    ThreadPool<void, int&> tP = ThreadPool<void, int&>(); //personal threadpool implementation
     int size = tP.ThreadsCount();
     int input;
     cout << "number of jobs:";
     cin >> input;
     auto start = std::chrono::steady_clock::now();
-    int results[50];
+    int results[50] = {}; //create a pool of results
     for(int i = 0; i < input; i++){
         tP.AddJob(DoCounting, results[i]);
     }

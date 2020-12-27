@@ -19,6 +19,8 @@ class ThreadPool{
     queue<tuple<T...>> argQueue;
 
     bool killPool = false;
+    int n = 1;
+    int m = 1;
 
     public:
         ThreadPool(int tNum = 0){
@@ -31,11 +33,12 @@ class ThreadPool{
                     Pool.emplace_back(&ThreadPool::Process, ref(*this));
                 }
             }
-            cout<<"Thread pool initialized\n";
+            cout<<"Thread pool size "<< tNum <<" initialized\n";
         }
 
         void AddJob(function<R(T...)> newJob, T... args){
-            cout<<"Adding job to queue\n";
+            cout<<"Adding "<< n <<"# job to queue\n";
+            n++;
             {            
                 unique_lock<mutex> lock(queueMutex);
                 opQueue.push(newJob);
@@ -61,10 +64,13 @@ class ThreadPool{
             {
                 function<R(T...)> *operation;
                 tuple<T...> *arguments;
+                int thisjobIndex;
                 {
                     unique_lock<mutex> lock(queueMutex);
                     if(!opQueue.empty()){
-                        cout<<"Begining job\n";
+                        cout<<"Begining "<< m <<"# job\n";
+                        thisjobIndex = m;
+                        m ++;
                         operation = &opQueue.front();
                         arguments = &argQueue.front();
                         opQueue.pop();
@@ -73,11 +79,14 @@ class ThreadPool{
                     }
                 }
                 if(isProcessing){
-                    if constexpr (is_same<void, R>::value){ //"compile time if"
-                        apply(operation, arguments);
+                    if constexpr (is_same<void, R>::value){ //constexpr = "compile time if"
+                        //apply(operation, &arguments); //**apply does not work on templated functions
+                        apply([&operation](T... tArg){(*operation)(tArg...);}, *arguments);
+                        cout<<"Job #"<< thisjobIndex <<"\n";
                     }
                     else{
-                        R retObj = apply(operation, arguments);
+                        R retObj = apply([&operation](T... tArg){return (*operation)(tArg...);}, *arguments);
+                        cout<<"Job #"<< thisjobIndex <<" done\n";
                     }
                     isProcessing = false;
                 }
