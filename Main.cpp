@@ -1,34 +1,44 @@
 #include "TileMap.hpp"
 #include <iostream>
 #include <chrono>
+#include <set>
 #include "ThreadPool.hpp"
 using namespace std;
 
-void DoCounting(int& input){
-    int result = input;
+int DoCounting(){
+    int result = 0;
     for(int i = 0; i < INT32_MAX; i++){
         result ++;
     }
     for(int i = 0; i < INT32_MAX; i++){
         result --;
     }
-    cout << "result:"<< result<<"\n";
-    cout << "result pointer:"<< &result<<"\n";
+    return result;
 }
 
 int main(){
-    ThreadPool<void, int&> tP = ThreadPool<void, int&>(); //personal threadpool implementation
-    int size = tP.ThreadsCount();
+    ThreadPool<int> tP = ThreadPool<int>(); //personal threadpool implementation
     int input;
     cout << "number of jobs:";
     cin >> input;
     auto start = std::chrono::steady_clock::now();
-    int results[50] = {}; //create a pool of results
+    set<int> toCheck;
+    auto& subscriber =  tP.Subscribe();
     for(int i = 0; i < input; i++){
-        tP.AddJob(DoCounting, results[i]);
+        toCheck.emplace(tP.AddJob(DoCounting));
     }
-    while(!tP.IsQueEmpty()){
-        continue;
+    while(true){
+        for(int i : toCheck){
+            int result;
+            if(subscriber.await(i, result)){
+                cout<< i <<"th job result is: " << result <<'\n';
+                toCheck.erase(i);
+                break;
+            }
+        }
+        if(toCheck.empty()){
+            break;
+        }
     }
     cout << "calling shutdown\n";
     tP.shutdown();

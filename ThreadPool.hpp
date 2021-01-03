@@ -7,7 +7,44 @@
 #include <queue>
 #include <functional>
 #include <tuple>
+#include <map>
 using namespace std;
+
+mutex resultQueueMutex;
+
+template<typename R>
+class ResultQueue{
+    vector<pair<int, R>> ResultSet;
+    int count = 0;
+    public:
+        void AddToQueue(R res, int index){
+            unique_lock<mutex> lock(resultQueueMutex);
+            ResultSet.emplace_back(index, res);
+            count++;
+        }
+
+        R operator[](int key){
+            if(ResultSet.count(key)>0){
+                unique_lock<mutex> lock(resultQueueMutex);
+                R _ret = ResultSet[key];
+                count--;
+                return _ret;
+            }
+        }
+
+        bool await(int indexToWait, R& placer){
+            unique_lock<mutex> lock(resultQueueMutex);
+            for(pair<int, R> set : ResultSet){
+                if(set.first != indexToWait){
+                    continue;
+                }
+                placer = set.second;
+                count--;
+                return true;
+            }
+            return false;
+        }
+};
 
 mutex poolMutex;
 mutex queueMutex;
@@ -17,10 +54,11 @@ class ThreadPool{
     vector<thread> Pool;
     queue<function<R(T...)>> opQueue;
     queue<tuple<T...>> argQueue;
+    ResultQueue<R> resQue;
 
     bool killPool = false;
-    int n = 1;
-    int m = 1;
+    int jobCounter = 1;
+    int processCounter = 1;
 
     public:
         ThreadPool(int tNum = 0){
@@ -36,14 +74,24 @@ class ThreadPool{
             cout<<"Thread pool size "<< tNum <<" initialized\n";
         }
 
-        void AddJob(function<R(T...)> newJob, T... args){
-            cout<<"Adding "<< n <<"# job to queue\n";
-            n++;
+        int AddJob(function<R(T...)> newJob, T... args){
+            cout<<"Adding "<< jobCounter <<"# job to queue\n";
+            int index;
             {            
                 unique_lock<mutex> lock(queueMutex);
                 opQueue.push(newJob);
                 argQueue.push(tuple<T...>(args...));
+                index = jobCounter;
+                jobCounter++;
             }
+            return index;
+        }
+
+        ResultQueue<R>& Subscribe(){
+            if constexpr (!is_same<R,void>()){
+                return resQue;
+            }
+            throw;
         }
 
         void shutdown(){
@@ -68,9 +116,9 @@ class ThreadPool{
                 {
                     unique_lock<mutex> lock(queueMutex);
                     if(!opQueue.empty()){
-                        cout<<"Begining "<< m <<"# job\n";
-                        thisjobIndex = m;
-                        m ++;
+                        cout<<"Begining "<< processCounter<<"# job\n";
+                        thisjobIndex = processCounter;
+                        processCounter ++;
                         operation = &opQueue.front();
                         arguments = &argQueue.front();
                         opQueue.pop();
@@ -87,6 +135,7 @@ class ThreadPool{
                     else{
                         R retObj = apply([&operation](T... tArg){return (*operation)(tArg...);}, *arguments);
                         cout<<"Job #"<< thisjobIndex <<" done\n";
+                        resQue.AddToQueue(retObj, thisjobIndex);
                     }
                     isProcessing = false;
                 }
