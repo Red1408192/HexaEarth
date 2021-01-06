@@ -54,3 +54,6 @@ enum Sibling : int8_t{
     Major = 1
 };
 
+int MapInterpolation(int left, int right, int up){
+    return (((left+right)/2)+up)/2;
+}
