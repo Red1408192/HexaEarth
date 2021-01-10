@@ -38,41 +38,76 @@ class SimplexNoise{
             range.erase(next(range.begin() + (randIndex-1)));
         }
     }
-/*         void PopulatePermutations(){ //Stupid Idea AF
-            vector<int> range = {};
-            range.reserve(detail);
-            for(int i = 0; i < detail; i++){
-                range.emplace_back(i);
-            }
-            while(randPerm.size() != detail){
-                int randIndex = rand()%detail;
-                emplyToPerm(range, randIndex);
-            }
+
+    #pragma region currentIndex
+
+    int CurrentTop(int y, int x, int w, bool last){
+        int offset = 0;
+        //converting to shadow indexes
+        w = w/2;
+        y = w*y;
+
+        if(x%2==1){
+            last? offset = -w : offset = 1;
         }
+        else{
+            offset = w;
+        }
+        x = x/2;
 
-        bool emplyToPerm(vector<int>& range, int randIndex, int sign = 0){
-            if(randIndex < 0 || randIndex > detail-1){
-                return false;
-            }
+        return y+x+offset;
+    }
 
-            if(temp.find(range[randIndex]) == temp.end()){
-                randPerm.emplace_back(range[randIndex]);
-                temp.insert(range[randIndex]);
-                return true;
-            }
-            else{
-                if(sign != 0){
-                    if(emplyToPerm(range, randIndex+sign, sign)){
-                        return true;
-                    }
-                    else{
-                    return emplyToPerm(range, randIndex-sign, -sign);
-                    }
-                }
-                else{
-                    randIndex%2 == 0? sign = 1 : sign = -1;
-                    return emplyToPerm(range, randIndex+sign, sign);
-                }
-            }
-        } */
+    int CurrentLeft(int y, int x, int w, bool last){
+        int offset = 0;
+        //converting to shadow indexes
+        w = w/2;
+        y = w*y;
+
+        if(x%2==1){
+            last? offset = 1 : offset = w;
+        }
+        else{
+            last? offset = -w-1 : offset = 0;
+        }
+        x = x/2;
+
+        return y+x+offset;
+    }
+
+    int CurrentRight(int y, int x, int w, bool last){
+        int offset = 0;
+        //converting to shadow indexes
+        w = w/2;
+        y = w*y;
+
+        if(x%2==1){
+            last? offset = 1 : offset = w+1;
+        }
+        else{
+            last? offset = -w : offset = 1;
+        }
+        x = x/2;
+
+        return y+x+offset;
+    }
+
+    #pragma endregion
+
+    int ShadowIndex(int y, int x, int w, int st, int (SimplexNoise::*IndexFunction)(int, int, int, bool), SimplexNoise& instance, bool last){
+        int i = ((instance.*IndexFunction)(y,x,w, last));
+        float u = ((float)1/st)*((float)(i%st));
+        int cV = randPerm[(i/st)%detail];
+        int nV = randPerm[(i/st+1)%detail];
+
+        return cV + (int)(u * (float)(nV - cV));
+    }
+
+    int NoiseMapInterrogation(int y, int x, int w,int steps, bool last = false){
+        auto top = ShadowIndex(y, x, w, steps, &SimplexNoise::CurrentTop, *this, x == w-1);
+        auto left = ShadowIndex(y, x, w, steps, &SimplexNoise::CurrentLeft, *this, x == w-1);
+        auto right = ShadowIndex(y, x, w, steps, &SimplexNoise::CurrentRight, *this, x == w-1);
+
+        return (top + left + right) / 3;
+    }
 };
