@@ -48,12 +48,13 @@ class SimplexNoise{
         y = w*y;
 
         if(x%2==1){
-            last? offset = -w : offset = 1;
+            last? offset = -w : offset = 0;
+            x = x/2+1;
         }
         else{
             offset = w;
+            x = x/2;
         }
-        x = x/2;
 
         return y+x+offset;
     }
@@ -65,12 +66,13 @@ class SimplexNoise{
         y = w*y;
 
         if(x%2==1){
-            last? offset = 1 : offset = w;
+            offset = w-1;
+            x = x/2+1;
         }
         else{
-            last? offset = -w-1 : offset = 0;
+            offset = 0;
+            x = x/2;
         }
-        x = x/2;
 
         return y+x+offset;
     }
@@ -82,12 +84,13 @@ class SimplexNoise{
         y = w*y;
 
         if(x%2==1){
-            last? offset = 1 : offset = w+1;
+            last? offset = 0 : offset = w;
+            x = x/2+1;
         }
         else{
-            last? offset = -w : offset = 1;
+            last? offset = -w+1 : offset = 1;
+            x = x/2;
         }
-        x = x/2;
 
         return y+x+offset;
     }
@@ -97,17 +100,19 @@ class SimplexNoise{
     int ShadowIndex(int y, int x, int w, int st, int (SimplexNoise::*IndexFunction)(int, int, int, bool), SimplexNoise& instance, bool last){
         int i = ((instance.*IndexFunction)(y,x,w, last));
         float u = ((float)1/st)*((float)(i%st));
-        int cV = randPerm[(i/st)%detail];
-        int nV = randPerm[(i/st+1)%detail];
+        int cVI = i/st;
+        int cV = randPerm[cVI%detail];
+        int nVI = i/st+1;
+        int nV = randPerm[nV%detail];
+        int intpol = (int)(u * (float)(nV - cV));
 
-        return cV + (int)(u * (float)(nV - cV));
+        return cV + intpol;
     }
 
     int NoiseMapInterrogation(int y, int x, int w,int steps, bool last = false){
-        auto top = ShadowIndex(y, x, w, steps, &SimplexNoise::CurrentTop, *this, x == w-1);
-        auto left = ShadowIndex(y, x, w, steps, &SimplexNoise::CurrentLeft, *this, x == w-1);
-        auto right = ShadowIndex(y, x, w, steps, &SimplexNoise::CurrentRight, *this, x == w-1);
-
+        auto left = ShadowIndex(y, x, w, steps, &SimplexNoise::CurrentLeft, *this, x >= w-2);
+        auto top = ShadowIndex(y, x, w, steps, &SimplexNoise::CurrentTop, *this, x >= w-2);        
+        auto right = ShadowIndex(y, x, w, steps, &SimplexNoise::CurrentRight, *this, x >= w-2);
         return (top + left + right) / 3;
     }
 };
