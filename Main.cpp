@@ -7,7 +7,7 @@
 using namespace std;
 
 int main(){
-    auto noise = SimplexNoise(512, 476473642);
+    auto noise = RedNoise(512, 476473642);
     cout << "[";
     for(int r : noise.GetPerm()){
         cout << r << ", ";
@@ -19,12 +19,11 @@ int main(){
 
     for(int y = size-1; y >= 0; y--){
         for(int x = 0; x < size; x++){
-            cout << noise.NoiseMapInterrogation(y, x, size, 32) << '\t';
+            cout << noise.NoiseMapInterrogation(y, x, size, 5, 0, 0.8) << '\t';
         }
-        cout <<'\n';
-        cout <<'\n';
-        cout <<'\n';
-        cout <<'\n';
+        cout << '\n';
+        cout << '\n';
+        cout << '\n';
     }
     return 0;
 }
