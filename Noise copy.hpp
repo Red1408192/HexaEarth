@@ -20,12 +20,6 @@ struct NoiseParameter{
     float slope = 6; // fader function's slope parameter
 };
 
-struct Vertices{
-    float t;
-    float q;
-    float p;
-};
-
 class RedNoise{
     vector<int> randPerm = {};
     mt19937 generator; //higher quality random gen than rand()
@@ -139,7 +133,7 @@ class RedNoise{
     }
 
 
-    Vertices SimplexProduct(float y, float x, float o, int w){
+    float SimplexProduct(float y, float x, float o, int w){
         //y,x coordinate are from the interrogated point
         float r = 0.866025f*o;
         float s = o/2;
@@ -216,7 +210,7 @@ class RedNoise{
                 p = sqrt((py*py)+(px*px))/o;
             }
         }
-        return Vertices{t,q,p};
+        return Fade(t,f)+Fade(p,f)+Fade(q,f);
     }
     #pragma endregion
     
@@ -255,8 +249,8 @@ class RedNoise{
         return (1.0+d*2.0)/(1+exp(-slope*(x-1./2.)))-d;
     }
 
-    Vertices NoiseMapInterrogation(int y, int x, NoiseParameter p){
-        Vertices t = SimplexProduct(p.vOffset+y,p.hOffset+x, p.simplexWidth, p.w);
-        return t;
+    float NoiseMapInterrogation(int y, int x, NoiseParameter p){
+        float t = SimplexProduct(p.vOffset+y,p.hOffset+x, p.simplexWidth, p.w);
+        return Fade(t, p.slope);
     }
 };
