@@ -12,7 +12,7 @@ void MapTest(int size, float simplexSize, int definition, float hOffset = 0.,flo
     NoiseParameter p = NoiseParameter{size,simplexSize, hOffset, vOffset, slope};
     for(int y = size-1; y >= 0; y--){
         for(int x = 0; x < size; x++){
-            cout << noise.NoiseMapInterrogation(y, x, p).t << '\t';
+            cout << noise.NoiseMapInterrogation(y, x, p) << '\t';
         }
         cout << '\n';
         cout << '\n';
@@ -28,7 +28,7 @@ void PrintTestMap(int size, float simplexSize, int definition = 256, float hOffs
     for(int y = size-1; y >= 0; y--){
         for(int x = 0; x < size; x++){
             auto value = noise.NoiseMapInterrogation(y, x, p);
-            op.InsertMap(value.t, value.q, value.p);
+            op.InsertMap(value, value, value);
         }
     }
     op.CloseMap();

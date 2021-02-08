@@ -20,12 +20,6 @@ struct NoiseParameter{
     float slope = 6; // fader function's slope parameter
 };
 
-struct Vertices{
-    float t;
-    float q;
-    float p;
-};
-
 class RedNoise{
     vector<int> randPerm = {};
     mt19937 generator; //higher quality random gen than rand()
@@ -117,21 +111,25 @@ class RedNoise{
     #pragma endregion
     #pragma region gradient and dotproduct
 
-    float DotProduct(int index, float y, float x){
+    float DotProduct(int index, float r, float dy, float dx){
         //y,x coordinate are the distance from the point and the
         int hash = randPerm[index%detail];
+        float gy, gx = 0;
         switch (hash&0b111)
         {
-        case 0: return -x;
-        case 1: return -y;
-        case 2: return x;
-        case 3: return y;
-        case 4: return -x-y;
-        case 5: return x+y;
-        case 6: return -x+y;
-        case 7: return x-y;
-        default: return 0.;
-        };
+            case 0: gy = 0; gx = r;
+            case 1: gy = r*sin(45.f); gx = r*cos(45.f);
+            case 2: gy = r; gx = 0;
+            case 3: gy = (r*sin(45.f)); gx = -(r*cos(45.f));
+            case 4: gy = 0; gx = -r;
+            case 5: gy = -(r*sin(45.f)); gx = -(r*cos(45.f));
+            case 6: gy = -r; gx = 0;
+            case 7: gy = -(r*sin(45.f)); gx = (r*cos(45.f));
+            default: break;
+        }
+        float upper = dy*gy + dx*gx;
+        float bottom = sqrt((gy*gy)+(gx*gx))*sqrt((dy*dy)+(dx*dx));
+        return acos(upper/bottom);
     }
 
     float lerp(float a, float b, float f){
@@ -139,7 +137,7 @@ class RedNoise{
     }
 
 
-    Vertices SimplexProduct(float y, float x, float o, int w){
+    float SimplexProduct(float y, float x, float o, int w){
         //y,x coordinate are from the interrogated point
         float r = 0.866025f*o;
         float s = o/2;
@@ -155,68 +153,67 @@ class RedNoise{
         float p = 0;
 
         float f = 0.2;
-
+        float ty,tx,qy,qx,py,px = 0;
+        int G = 0;
         if((a%2==0)==(b%2==0)){
             if(yi>=xi*r/s){         //0
-                float ty = yi;
-                float tx = xi;
-                float qy = r-yi;
-                float qx = s-xi;
-                float py = r-yi;
-                float px = xi+s;
-                //t = DotProduct(CurrentTop(a, b-1, w, (a>sl-2)), yi, xi);
-                t = sqrt((ty*ty)+(tx*tx))/o;
-                //q = DotProduct(CurrentLeft(a, b-1, w, (a>sl-2)), yi, xi);
-                q = sqrt((qy*qy)+(qx*qx))/o;
-                //p = DotProduct(CurrentRight(a, b-1, w, (a>sl-2)), yi, xi);
-                p = sqrt((py*py)+(px*px))/o;
+                ty = yi;
+                tx = xi;
+
+                qy = r-yi;
+                qx = s-xi;
+
+                py = r-yi;
+                px = xi+s;
+
+                G = b/2;
             }
             else{                   //1
-                float ty = r-yi;
-                float tx = s-xi;
-                float qy = yi;
-                float qx = o-xi;
-                float py = yi;
-                float px = xi;
-                //t = DotProduct(CurrentTop(a, b, w, (a>sl-2)), yi, xi);
-                t = sqrt((ty*ty)+(tx*tx))/o;
-                //q = DotProduct(CurrentLeft(a,b, w, (a>sl-2)), yi, xi);
-                q = sqrt((qy*qy)+(qx*qx))/o;
-                //p = DotProduct(CurrentRight(a,b, w, (a>sl-2)), yi, xi);
-                p = sqrt((py*py)+(px*px))/o;
+                ty = r-yi;
+                tx = s-xi;
+
+                qy = yi;
+                qx = o-xi;
+
+                py = yi;
+                px = xi;
+
+                G = (b/2)-1;
             }
         }
         else{
             if(yi>r-xi*(r/s)){      //2
-                float ty = yi;
-                float tx = s-xi;
-                float qy = r-yi;
-                float qx = o-xi;
-                float py = r-yi;
-                float px = xi;
-                //t = DotProduct(CurrentTop(a, b, w, (a>sl-2)), yi, xi);
-                t = sqrt((ty*ty)+(tx*tx))/o;
-                //q = DotProduct(CurrentLeft(a, b, w, (a>sl-2)), yi, xi);
-                q = sqrt((qy*qy)+(qx*qx))/o;
-                //p = DotProduct(CurrentRight(a,b, w, (a>sl-2)), yi, xi);
-                p = sqrt((py*py)+(px*px))/o;
+                ty = yi;
+                tx = s-xi;
+
+                qy = r-yi;
+                qx = o-xi;
+
+                py = r-yi;
+                px = xi;
+
+                G = b/2;
             }
             else{                   //3
-                float ty = r-yi;
-                float tx = xi;
-                float qy = yi;
-                float qx = s-xi;
-                float py = yi;
-                float px = xi+s;
-                //t = DotProduct(CurrentTop(a, b-1, w, (a>sl-2)), yi, xi);
-                t = sqrt((ty*ty)+(tx*tx))/o;
-                //q = DotProduct(CurrentLeft(a, b-1, w, (a>sl-2)), yi, xi);
-                q = sqrt((qy*qy)+(qx*qx))/o;
-                //p = DotProduct(CurrentRight(a, b-1, w, (a>sl-2)), yi, xi);
-                p = sqrt((py*py)+(px*px))/o;
+                ty = r-yi;
+                tx = xi;
+
+                qy = yi;
+                qx = s-xi;
+
+                py = yi;
+                px = xi+s;
+
+                G = (b/2)-1;
             }
         }
-        return Vertices{t,q,p};
+        t = DotProduct(CurrentTop(a, G, w, (b>sl-2)),o, ty, tx);
+        //t = sqrt((ty*ty)+(tx*tx))/o;
+        q = DotProduct(CurrentLeft(a, G, w, (b>sl-2)),o, qy, qy);
+        //q = sqrt((qy*qy)+(qx*qx))/o;
+        p = DotProduct(CurrentRight(a, G, w, (b>sl-2)),o, py, px);
+        //p = sqrt((py*py)+(px*px))/o;
+        return t+q+p;
     }
     #pragma endregion
     
@@ -255,8 +252,8 @@ class RedNoise{
         return (1.0+d*2.0)/(1+exp(-slope*(x-1./2.)))-d;
     }
 
-    Vertices NoiseMapInterrogation(int y, int x, NoiseParameter p){
-        Vertices t = SimplexProduct(p.vOffset+y,p.hOffset+x, p.simplexWidth, p.w);
-        return t;
+    float NoiseMapInterrogation(int y, int x, NoiseParameter p){
+        float t = SimplexProduct(p.vOffset+y,p.hOffset+x, p.simplexWidth, p.w);
+        return Fade(t, p.slope);
     }
 };
