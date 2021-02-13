@@ -25,7 +25,7 @@ void PrintTestMap(int size, float simplexSize, int definition = 256, float hOffs
     OutputBitmap op = OutputBitmap();
     op.beginMap(size);
     NoiseParameter p = NoiseParameter{size,simplexSize, hOffset, vOffset, slope};
-    for(int y = size-1; y >= 0; y--){
+    for(int y = 0; y < size; y++){
         for(int x = 0; x < size; x++){
             auto value = noise.NoiseMapInterrogation(y, x, p);
             op.InsertMap(value, value, value);
@@ -60,10 +60,9 @@ void loadTest(int definition, int maxHeight, float maxSimplex, float vOffset = 0
         }
     }
 }
-
 int main(){
     float h = (64.f*0.866025f);
-    PrintTestMap(512, 64.f, 256, h/1.3, 0.0, 0.1);
+    PrintTestMap(512, 64.f, 256, 0, 0.0, 0.1);
     auto noise = RedNoise(256, 476473642);
     return 0;
 }

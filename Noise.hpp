@@ -51,9 +51,11 @@ class RedNoise{
 
     #pragma region triagle index
 
-    int CurrentTop(int y, int x, int w, bool last){
+
+    int CurrentTop(int y, int x, int w){
         //converting to shadow indexes
-        if(x<0) {x=w+x;last=x>w-2;}; 
+        if(x<0) {x=w+x;};
+        bool last=x>=w-2;
         int offset = 0;
         w = w/2;
         y = w*y;
@@ -64,15 +66,16 @@ class RedNoise{
         }
         else{
             offset = w;
-            x = x/2;
+            x = (x/2);
         }
 
         return y+x+offset;
     }
 
-    int CurrentLeft(int y, int x, int w, bool last){
+    int CurrentLeft(int y, int x, int w){
         //converting to shadow indexes
-        if(x<0) {x=w+x;last=x>w-2;}; 
+        if(x<0) {x=w+x;};
+        bool last=x>=w-2;
         int offset = 0;
         w = w/2;
         y = w*y;
@@ -89,9 +92,10 @@ class RedNoise{
         return y+x+offset;
     }
 
-    int CurrentRight(int y, int x, int w, bool last){
+    int CurrentRight(int y, int x, int w){
         //converting to shadow indexes
-        if(x<0) {x=w+x;last=x>w-2;}; 
+        if(x<0) {x=w+x;};
+        bool last=x>=w-2;
         int offset = 0;
         w = w/2;
         y = w*y;
@@ -108,6 +112,7 @@ class RedNoise{
         return y+x+offset;
     }
 
+
     #pragma endregion
     #pragma region gradient and dotproduct
 
@@ -118,13 +123,13 @@ class RedNoise{
         switch (hash&0b111)
         {
             case 0: gy = 0; gx = r;
-            case 1: gy = r*sin(45.f); gx = r*cos(45.f);
+            case 1: gy = r*sin(0.706858f); gx = r*cos(0.706858f);
             case 2: gy = r; gx = 0;
-            case 3: gy = (r*sin(45.f)); gx = -(r*cos(45.f));
+            case 3: gy = (r*sin(0.706858f)); gx = -(r*cos(0.706858f));
             case 4: gy = 0; gx = -r;
-            case 5: gy = -(r*sin(45.f)); gx = -(r*cos(45.f));
+            case 5: gy = -(r*sin(0.706858f)); gx = -(r*cos(0.706858f));
             case 6: gy = -r; gx = 0;
-            case 7: gy = -(r*sin(45.f)); gx = (r*cos(45.f));
+            case 7: gy = -(r*sin(0.706858f)); gx = (r*cos(0.706858f));
             default: break;
         }
         float upper = dy*gy + dx*gx;
@@ -207,20 +212,23 @@ class RedNoise{
                 G = (b/2)-1;
             }
         }
-        t = DotProduct(CurrentTop(a, G, w, (b>sl-2)),o, ty, tx);
+        auto cT = CurrentTop(a, G, sl);
+        t = DotProduct(cT, o, ty, tx); //CurrentTop(a, G, w, (b>sl-2)
         //t = sqrt((ty*ty)+(tx*tx))/o;
-        q = DotProduct(CurrentLeft(a, G, w, (b>sl-2)),o, qy, qy);
+        auto cQ = CurrentLeft(a, G, sl);
+        q = DotProduct(cQ ,o, qy, qy);
         //q = sqrt((qy*qy)+(qx*qx))/o;
-        p = DotProduct(CurrentRight(a, G, w, (b>sl-2)),o, py, px);
+        auto cP = CurrentRight(a, G, sl);
+        p = DotProduct(cP , o, py, px);
         //p = sqrt((py*py)+(px*px))/o;
-        return t+q+p;
+        return t;
     }
     #pragma endregion
     
     void printTestIndexesMap(){
         for (int y = 23; y>-1; y--){
             for (int x = 0; x<24; x++){
-                auto p = CurrentLeft(y,x,24,(x>22));
+                auto p = CurrentLeft(y,x,24);
                 cout << p << '\t';
             }
             cout<<'\n';
@@ -229,7 +237,7 @@ class RedNoise{
         cout<<'\n';
         for (int y = 23; y>-1; y--){
             for (int x = 0; x<24; x++){
-                auto p = CurrentRight(y,x,24,(x>21));
+                auto p = CurrentRight(y,x,24);
                 cout << p << '\t';
             }
             cout<<'\n';
@@ -238,7 +246,7 @@ class RedNoise{
         cout<<'\n';
         for (int y = 23; y>-1; y--){
             for (int x = 0; x<24; x++){
-                auto p = CurrentTop(y,x,24,(x>21));
+                auto p = CurrentTop(y,x,24);
                 cout << p << '\t';
             }
             cout<<'\n';
