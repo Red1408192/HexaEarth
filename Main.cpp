@@ -62,7 +62,7 @@ void loadTest(int definition, int maxHeight, float maxSimplex, float vOffset = 0
 }
 int main(){
     float h = (64.f*0.866025f);
-    PrintTestMap(512, 64.f, 256, 0, 0.0, 0.1);
+    PrintTestMap(512, 256, 256, 0, 0.0, 0.1);
     auto noise = RedNoise(256, 476473642);
     return 0;
 }

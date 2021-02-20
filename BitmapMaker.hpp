@@ -43,9 +43,9 @@ class OutputBitmap{
         }
 
         void InsertMap(float t, float q, float p){
-            int tg = 255*t;
-            int qg = 255*q;
-            int pg = 255*p;
+            int tg = 127+(127*t);
+            int qg = 127+(127*q);
+            int pg = 127+(127*p);
             Pixel pixel = {(uint8_t)tg, (uint8_t)qg, (uint8_t)pg};
             image.write((char *) &pixel, 3);
         }

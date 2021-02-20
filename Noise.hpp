@@ -20,6 +20,12 @@ struct NoiseParameter{
     float slope = 6; // fader function's slope parameter
 };
 
+struct Weights{
+    float w1 = 0;
+    float w2 = 0;
+    float w3 = 0;
+};
+
 class RedNoise{
     vector<int> randPerm = {};
     mt19937 generator; //higher quality random gen than rand()
@@ -112,6 +118,13 @@ class RedNoise{
         return y+x+offset;
     }
 
+    Weights getWeights(float y, float x, float ty, float tx, float qy, float qx, float py, float px){
+        //finds the baricentric coordinates
+        float w1 = ((qy-py)*(x-px)+(px-qx)*(y-py))/((qy-py)*(tx-px)+(px-qx)*(ty-py));//t
+        float w2 = ((py-ty)*(x-px)+(tx-px)*(y-py))/((qy-py)*(tx-px)+(px-qx)*(ty-py));//q
+        float w3 = 1-w1-w2;//p
+        return Weights{w1,w2,w3};
+    }
 
     #pragma endregion
     #pragma region gradient and dotproduct
@@ -122,14 +135,14 @@ class RedNoise{
         float gy, gx = 0;
         switch (hash&0b111)
         {
-            case 0: gy = 0; gx = r;
-            case 1: gy = r*sin(0.706858f); gx = r*cos(0.706858f);
-            case 2: gy = r; gx = 0;
-            case 3: gy = (r*sin(0.706858f)); gx = -(r*cos(0.706858f));
-            case 4: gy = 0; gx = -r;
-            case 5: gy = -(r*sin(0.706858f)); gx = -(r*cos(0.706858f));
-            case 6: gy = -r; gx = 0;
-            case 7: gy = -(r*sin(0.706858f)); gx = (r*cos(0.706858f));
+            case 0: gy = 0; gx = r; break;
+            case 1: gy = r*sin(0.706858f); gx = r*cos(0.706858f); break;
+            case 2: gy = r; gx = 0; break;
+            case 3: gy = (r*sin(0.706858f)); gx = -(r*cos(0.706858f)); break;
+            case 4: gy = 0; gx = -r; break;
+            case 5: gy = -(r*sin(0.706858f)); gx = -(r*cos(0.706858f)); break;
+            case 6: gy = -r; gx = 0; break;
+            case 7: gy = -(r*sin(0.706858f)); gx = (r*cos(0.706858f)); break;
             default: break;
         }
         float upper = dy*gy + dx*gx;
@@ -157,8 +170,8 @@ class RedNoise{
         float q = 0;
         float p = 0;
 
-        float f = 0.2;
         float ty,tx,qy,qx,py,px = 0;
+        Weights weights = {0.f,0.f,0.f};
         int G = 0;
         if((a%2==0)==(b%2==0)){
             if(yi>=xi*r/s){         //0
@@ -172,6 +185,7 @@ class RedNoise{
                 px = xi+s;
 
                 G = b/2;
+                weights = getWeights(yi,s+xi,r,s,0,0,0,o);
             }
             else{                   //1
                 ty = r-yi;
@@ -184,6 +198,7 @@ class RedNoise{
                 px = xi;
 
                 G = (b/2)-1;
+                weights = getWeights(yi,xi,0,s,r,0,r,o);
             }
         }
         else{
@@ -198,6 +213,7 @@ class RedNoise{
                 px = xi;
 
                 G = b/2;
+                weights = getWeights(yi,xi,r,s,0,0,0,o);
             }
             else{                   //3
                 ty = r-yi;
@@ -210,21 +226,24 @@ class RedNoise{
                 px = xi+s;
 
                 G = (b/2)-1;
+                weights = getWeights(yi,xi,0,s,r,0,r,o);
             }
         }
         auto cT = CurrentTop(a, G, sl);
         t = DotProduct(cT, o, ty, tx); //CurrentTop(a, G, w, (b>sl-2)
         //t = sqrt((ty*ty)+(tx*tx))/o;
         auto cQ = CurrentLeft(a, G, sl);
-        q = DotProduct(cQ ,o, qy, qy);
+        q = DotProduct(cQ, o, qy, qy);
         //q = sqrt((qy*qy)+(qx*qx))/o;
         auto cP = CurrentRight(a, G, sl);
-        p = DotProduct(cP , o, py, px);
+        p = DotProduct(cP, o, py, px);
         //p = sqrt((py*py)+(px*px))/o;
-        return t;
+        return min(p,min(t,q));
     }
     #pragma endregion
     
+
+
     void printTestIndexesMap(){
         for (int y = 23; y>-1; y--){
             for (int x = 0; x<24; x++){
