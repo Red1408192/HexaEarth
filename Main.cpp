@@ -66,4 +66,3 @@ int main(){
     auto noise = RedNoise(256, 476473642);
     return 0;
 }
-

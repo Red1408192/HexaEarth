@@ -133,21 +133,24 @@ class RedNoise{
         //y,x coordinate are the distance from the point and the
         int hash = randPerm[index%detail];
         float gy, gx = 0;
+        float sinVal = r*sin(0.706858f);
+        float cosVal = r*cos(0.706858f);
+
         switch (hash&0b111)
         {
             case 0: gy = 0; gx = r; break;
-            case 1: gy = r*sin(0.706858f); gx = r*cos(0.706858f); break;
+            case 1: gy = sinVal; gx = cosVal; break;
             case 2: gy = r; gx = 0; break;
-            case 3: gy = (r*sin(0.706858f)); gx = -(r*cos(0.706858f)); break;
+            case 3: gy = sinVal; gx = -cosVal; break;
             case 4: gy = 0; gx = -r; break;
-            case 5: gy = -(r*sin(0.706858f)); gx = -(r*cos(0.706858f)); break;
+            case 5: gy = -sinVal; gx = -cosVal; break;
             case 6: gy = -r; gx = 0; break;
-            case 7: gy = -(r*sin(0.706858f)); gx = (r*cos(0.706858f)); break;
+            case 7: gy = -sinVal; gx = cosVal; break;
             default: break;
         }
+
         float upper = dy*gy + dx*gx;
-        float bottom = sqrt((gy*gy)+(gx*gx))*sqrt((dy*dy)+(dx*dx));
-        return acos(upper/bottom);
+        return upper;
     }
 
     float lerp(float a, float b, float f){
@@ -238,40 +241,9 @@ class RedNoise{
         auto cP = CurrentRight(a, G, sl);
         p = DotProduct(cP, o, py, px);
         //p = sqrt((py*py)+(px*px))/o;
-        return min(p,min(t,q));
+        return p*weights.w3;
     }
     #pragma endregion
-    
-
-
-    void printTestIndexesMap(){
-        for (int y = 23; y>-1; y--){
-            for (int x = 0; x<24; x++){
-                auto p = CurrentLeft(y,x,24);
-                cout << p << '\t';
-            }
-            cout<<'\n';
-        }
-        cout<<'\n';
-        cout<<'\n';
-        for (int y = 23; y>-1; y--){
-            for (int x = 0; x<24; x++){
-                auto p = CurrentRight(y,x,24);
-                cout << p << '\t';
-            }
-            cout<<'\n';
-        }
-        cout<<'\n';
-        cout<<'\n';
-        for (int y = 23; y>-1; y--){
-            for (int x = 0; x<24; x++){
-                auto p = CurrentTop(y,x,24);
-                cout << p << '\t';
-            }
-            cout<<'\n';
-        }
-
-    }
 
     float Fade(float x, float slope){
         if (x==0) return 0;

@@ -12,7 +12,9 @@
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-std=c++17",
                 "-pedantic-errors",
-                "-pthread"
+                "-pthread",
+                "-L/usr/include/GLFW",
+                "-lglfw3"  
             ],
             "options": {
                 "cwd": "/usr/bin"
@@ -34,7 +36,9 @@
                 "${fileDirname}/${fileBasenameNoExtension}",
                 "-std=c++17",
                 "-pedantic-errors",
-                "-pthread"
+                "-pthread",
+                "-L/usr/include/GLFW",
+                "-lglfw3"                
             ],
             "options": {
                 "cwd": "/usr/bin"
